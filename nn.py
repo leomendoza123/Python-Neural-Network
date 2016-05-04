@@ -13,6 +13,7 @@ Code is placed in public domain.
 
 import math
 import random
+from dbConector import *
 
 random.seed(0)
 
@@ -230,23 +231,21 @@ def demoRegression():
         print "Must have matplotlib to plot."
 
 
-def demoClassification():
-    # Teach network XOR function
-    pat = [
-        [[0,0], [0]],
-        [[0,1], [1]],
-        [[1,0], [1]],
-        [[1,1], [0]]
-    ]
+def Classification():
+
+    database = dbconnector()
+
 
     # create a network with two input, two hidden, and one output nodes
-    n = NN(2, 2, 1, regression = False)
+    n = NN(64, 35, 10, regression = False)
 
     # train it with some patterns then test it.
-    n.train(pat, 1000, 0.5, 0.2)
-    n.test(pat, verbose = True)
+   
+    n.train(database, 1000, 0.5, 0.8)
+    n.test(database, verbose = True)
 
 
 if __name__ == '__main__':
     #demoRegression()
-    demoClassification()
+    Classification()
+    
