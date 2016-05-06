@@ -29,10 +29,13 @@ def dbsaveWeights (self, outputFileName):
 
     f = open(outputFileName, 'w')
 
-
+    f.write (str(len(self.ci)) + ' ' + str(len(self.ci[0])) + '\n')
     f.write (str(self.ci))
     f.write (str ('\n') )
     f.write (str(self.wi))
+    f.write (str ('\n') )
+
+    f.write (str(len(self.co)) + ' ' + str(len(self.co[0])) + '\n')
     
     f.write (str ('\n') )
     f.write ( str(self.wo))
@@ -49,35 +52,39 @@ def dbloadWeights (self, FileName):
 
     f = open(FileName, 'r')
 
+   
+    heigh_width = f.readline().split('\n')[0].split(' ')
     ci = np.matrix(f.readline())
-    self.ci = makeMatrix (ci.shape[0],ci.shape[1],0)
-    print ci.shape
-    ##fillMatrix (self.ci, ci)
+    self.ci = makeMatrix (int(heigh_width[0]),int(heigh_width[1]),0)
+    fillMatrix (self.ci, ci, heigh_width[0], heigh_width[1])
 
     wi = np.matrix(f.readline())
-    self.wi = makeMatrix (wi.shape[0],ci.shape[1],0)
-    ##fillMatrix (self.wi, wi)
+    self.wi = makeMatrix (int(heigh_width[0]),int(heigh_width[1]),0)
+    fillMatrix (self.wi, wi, heigh_width[0], heigh_width[1])
+
+
+    heigh_width = f.readline().split('\n')[0].split(' ')
 
     wo = np.matrix(f.readline())
-    self.wo = makeMatrix (wo.shape[0],ci.shape[1],0)
-    ##fillMatrix (self.wo, wo)
-
+    self.wo = makeMatrix (int(heigh_width[0]),int(heigh_width[1]),0)
+    fillMatrix (self.wo, wo, heigh_width[0], heigh_width[1])
+    
     co = np.matrix(f.readline())
-    self.co = makeMatrix (co.shape[0],co.shape[1],0)
-    ##fillMatrix (self.co, co)
+    
+    self.co = makeMatrix (int(heigh_width[0]),int(heigh_width[1]),0)
+    fillMatrix (self.co, co, heigh_width[0], heigh_width[1])
 
-    print ci.shape
-    print wi.shape
-    print wo.shape
+    ##print ci.shape
+    #print wi.shape
+    #print wo.shape
     print co.shape
 
 
 
-def fillMatrix(matrix, numpyMatrix):
-    for k in range(len(matrix[0])):
-        
-        for j in range(len(matrix[0])):
-                matrix[k][j] = numpyMatrix.item((k, j))
+def fillMatrix(matrix, numpyMatrix, sizeX, sizeY):
+    for k in range(int(sizeX)):
+    
+                matrix[int(sizeX)/int(sizeY)][k%int(sizeY)] = numpyMatrix.item((0, k))
 
 
 

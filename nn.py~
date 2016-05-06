@@ -171,8 +171,11 @@ class NN:
             error += 0.5*((targets[k]-self.ao[k])**2)
         return error
 
+    @staticmethod
+    def test( NNfileName, patternsfileName, verbose = False):
 
-    def test(self, patterns, verbose = False):
+        self = NN(64, 35, 10, regression = False, NNcurrentWeights = NNfileName)
+	patterns = dbconnector(patternsfileName)
         tmp = []
         for p in patterns:
             if verbose:
@@ -198,11 +201,11 @@ class NN:
         
 	self = NN(64, 35, 10, regression = False, NNcurrentWeights = NNfileName)
 	patterns = dbconnector(patternsfileName)
-	self.trainWork (patterns, outputFileName ,min_error, N, M=0.5, max_iterations=max_iter)
+	self.trainWork (patterns, outputFileName ,min_error, N, M=0.2, max_iterations=max_iter)
 
 
     @staticmethod
-    def newtrain(patternsfileName, outputFileName,  min_error, max_iterations=1000, N=0.5, M=0.1, verbose = False):
+    def newtrain(patternsfileName, outputFileName,  min_error, max_iterations=1000, N=0.5, M=0.2, verbose = False):
 
 	self = NN(64, 35, 10, regression = False)
 
@@ -277,9 +280,10 @@ def Classification():
     #train it with some patterns then test it.
     ##NN.newtrain('NumbersDB', 'savedNN', 40,  100, 0.5, 0.5)
 
-    NN.train('NumbersDB', 'savedNN', 'savedNN2', 0.5, 40, 100)
 
-    ##n.test(database, verbose = True)
+    NN.train('NumbersDB', 'savedNN2', 'savedNN3', 0.5, 5, 1000000000)
+
+    print NN.test('savedNN2', 'NumbersDB' )
 
 
 
