@@ -1,58 +1,28 @@
-"""
-Pure Python implementation of a Back-Propagation Neural Network using the
-hyperbolic tangent as the sigmoid squashing function.
-
-Original Author: Neil Schemenauer <nas@arctrix.com>
-Modified Author: James Howard <james.w.howard@gmail.com>
-
-Modified to work for function regression and added option to use matplotlib
-to display regression networks.
-
-Code is placed in public domain.
-"""
-
 import math
 import random
 from dbConector import *
 
 random.seed(0)
 
-# calculate a random number where:  a <= rand < b
+
 def rand(a, b):
     return (b-a)*random.random() + a
 
-# Make a matrix (we could use NumPy to speed this up)
+
 def makeMatrix(I, J, fill=0.0):
     m = []
     for i in range(I):
         m.append([fill]*J)
     return m
 
-# our sigmoid function, tanh is a little nicer than the standard 1/(1+e^-x)
+
 def sigmoid(x):
     return math.tanh(x)
 
-# derivative of our sigmoid function, in terms of the output (i.e. y)
+
 def dsigmoid(y):
     return 1.0 - y**2
 
-
-def plot(inputs, outputs, actual):
-    """Plot a given function.  
-    
-    The actual function will be plotted with a line and the outputs with 
-    points.  Useful for visualizing the error of the neural networks attempt 
-    at function interpolation."""
-    try:
-        import matplotlib.pyplot
-    except:
-        raise ImportError, "matplotlib package not found."
-    fig = matplotlib.pyplot.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.plot(inputs, actual, 'b-')
-    ax1.plot(inputs, outputs, 'r.')
-    matplotlib.pyplot.draw()
-    
     
 
 class NN:
@@ -60,12 +30,7 @@ class NN:
         """NN constructor.
         
         ni, nh, no are the number of input, hidden and output nodes.
-        regression is used to determine if the Neural network will be trained 
-        and used as a classifier or for function regression.
         """
-        
-      
-
 
         self.regression = regression
         
@@ -104,6 +69,7 @@ class NN:
 
 
     def update(self, inputs):
+	##print (len(inputs), self.ni-1)
         if len(inputs) != self.ni-1:
             raise ValueError, 'wrong number of inputs'
 
@@ -174,16 +140,32 @@ class NN:
     @staticmethod
     def test( NNfileName, patternsfileName, verbose = False):
 
-        self = NN(64, 35, 10, regression = False, NNcurrentWeights = NNfileName)
-	patterns = dbconnector(patternsfileName)
+
+	fileLoaded = dbconnector(patternsfileName)
+	patterns = fileLoaded[0]
+	databaseInfo = fileLoaded[1]
+        self = NN(int(databaseInfo[1]), int(databaseInfo[2]), int(databaseInfo[3]), regression = False, NNcurrentWeights = NNfileName)
+	
         tmp = []
         for p in patterns:
             if verbose:
-                print p[0], '->', self.update(p[0])
+                expected = p[1]
+                NNRoundResult = self.roundResult (self.update(p[0]))
+                print expected, '->', NNRoundResult, '->',  (expected==NNRoundResult)
             tmp.append(self.update(p[0]))
 
         return tmp
 
+
+    def roundResult (self, result): 
+        roundedResult = []
+        for x in result:
+            if (x>0.5):
+                roundedResult.append (1)
+            else:
+                roundedResult.append (0)
+        return roundedResult; 
+        
         
     def weights(self):
         print 'Input weights:'
@@ -196,18 +178,26 @@ class NN:
 
 
     @staticmethod
-    def train(patternsfileName, NNfileName, outputFileName, N, min_error, max_iter):
+    def train(patternsfileName, NNfileName, outputFileName, min_error, max_iterations=1000, N=0.5, M=0.2, verbose = False):
 	
-        
-	self = NN(64, 35, 10, regression = False, NNcurrentWeights = NNfileName)
-	patterns = dbconnector(patternsfileName)
-	self.trainWork (patterns, outputFileName ,min_error, N, M=0.2, max_iterations=max_iter)
+        db = dbconnector(patternsfileName)
+	patterns = db[0]
+	patternsInfo = db [1]
+	self = NN(int(patternsInfo[1]), int(patternsInfo[2]), int(patternsInfo[3]), regression = False, NNcurrentWeights = NNfileName)
+
+
+	self.trainWork (patterns, outputFileName ,min_error, N, M, max_iterations)
 
 
     @staticmethod
     def newtrain(patternsfileName, outputFileName,  min_error, max_iterations=1000, N=0.5, M=0.2, verbose = False):
 
-	self = NN(64, 35, 10, regression = False)
+
+        db = dbconnector(patternsfileName)
+	patterns = db[0]
+	patternsInfo = db [1]
+	self = NN(int(patternsInfo[1]), int(patternsInfo[2]), int(patternsInfo[3]), regression = False)
+
 
         """Train the neural network.  
         
@@ -216,7 +206,7 @@ class NN:
         """
 
 
-	patterns = dbconnector(patternsfileName)
+
 	self.trainWork (patterns, outputFileName ,min_error, N, M, max_iterations)
 	
 
@@ -231,67 +221,27 @@ class NN:
             if i % 100 == 0 or min_error == error:
                 print 'error %-14f' % error
 		dbsaveWeights(self, outputFileName)
-		if min_error == error:
+		if min_error > error:
                     break
 
             
 
-def demoRegression():
-    data = []
-    inputs = []
-    actual = []
-
-    domain = [-1, 1]
-    steps = 50
-    stepsize = (domain[1] - domain[0]) / ((steps - 1)*1.0)
-
-    #Teach the network the function y = x**2
-    for i in range(steps):
-        x = domain[0] + stepsize * i
-        y = x**2
-        
-        data.append([[x], [y]])
-        inputs.append(x)
-        actual.append(y)
-        
-    n = NN(1, 4, 1, regression = True)
-    
-    #Train and test the nural network.
-    n.train(data, 1000, 0.2, 0.1, False)
-    outputs = n.test(data, verbose = True)
-    
-    #Plot the function.
-    try:
-        plot(inputs, outputs, actual)
-        print "Press a key to quit."
-        value = raw_input()
-    except:
-        print "Must have matplotlib to plot."
+def Demo():
 
 
-def Classification():
+	## XOR EXAMPLE
 
-    
+   ##NN.newtrain('exampleData/xorDb', 'exampleData/xorNn', 0.5,  100000000, 0.001, 0.001)
+   ##NN.train('exampleData/xorDb', 'exampleData/xorNn', 'exampleData/xorNn', 5,  10000000, 0.001, 0.001)
+   ##print NN.test('exampleData/xorNn', 'exampleData/xorDb', True )
+  
+	## Numbers EXAMPLE
 
-
-    # create a network with two input, two hidden, and one output nodes
-    ##n = NN(64, 35, 10, regression = False)
-
-    #train it with some patterns then test it.
-    ##NN.newtrain('NumbersDB', 'savedNN', 40,  100, 0.5, 0.5)
-
-
-    NN.train('NumbersDB', 'savedNN3', 'savedNN4', 0.5, 5, 1000000000)
-
-    print NN.test('savedNN2', 'NumbersDB' )
-
-
-
-
-
-
+   ##NN.newtrain('exampleData/numbersDb', 'exampleData/numbersNn-new', 0.5,  100000000, 0.001, 0.001)
+   ##NN.train('exampleData/numbersDb', 'exampleData/numbersNn-working', 'exampleData/numbersNn-working-2', 0.5,  10000000, 0.01, 0.01)
+   ##print NN.test('exampleData/numbersNn-new', 'exampleData/numbersDb', True )
+  
 
 if __name__ == '__main__':
-    #demoRegression()
-    Classification()
-    
+    Demo()
+
